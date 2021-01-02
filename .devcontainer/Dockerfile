@@ -54,7 +54,7 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
     && apt-get install -y nodejs \
     && npm install --global pyright
 
-RUN pip install -U pip
+RUN python -m pip install --upgrade pip
 
 # copy requirements files
 COPY ./requirements.txt /tmp/requirements.txt

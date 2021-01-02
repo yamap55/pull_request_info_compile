@@ -1,0 +1,10 @@
+[flake8]
+max-line-length=100
+# W503 Line break occurred before a binary operator [ref]https://www.flake8rules.com/rules/W503.html
+ignore=W503
+exclude=__init__.py,work
+per-file-ignores=tests/*:D
+max-complexity=10
+inline-quotes=double
+multiline-quotes=double
+docstring-quotes=double

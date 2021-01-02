@@ -15,6 +15,7 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: echo "$COMMIT_MESSAGE"
+      - uses: actions/checkout@v2
       - name: execute script
         env:
           GITHUB_REPOSITORY_NAME: ${{ github.repository}}

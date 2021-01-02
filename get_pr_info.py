@@ -60,7 +60,7 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
     Returns
     -------
     str
-        [description]
+        PRの概要
     """
     github = Github(github_token)
     repo = github.get_repo(repository_name)

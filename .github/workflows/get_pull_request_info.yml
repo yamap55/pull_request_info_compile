@@ -4,7 +4,7 @@ on:
     branches:
       - master
 jobs:
-  one:
+  get_pr_info:
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context

@@ -18,3 +18,6 @@ jobs:
       - name: execute hello world
         run: |
           python hello.py
+      - name: print environment variables
+        run: |
+          python print_environment_variables.py

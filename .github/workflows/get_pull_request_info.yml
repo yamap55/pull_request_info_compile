@@ -1,0 +1,17 @@
+name: get pull request info
+on:
+  push:
+    branches:
+      - master
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: print github.head_commit.message
+        env:
+          COMMIT_MESSAGE: ${{ toJson(github).head_commit.message }}
+        run: echo "$COMMIT_MESSAGE"

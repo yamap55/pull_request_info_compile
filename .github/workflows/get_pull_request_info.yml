@@ -15,3 +15,10 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: echo "$COMMIT_MESSAGE"
+      - name: execute script
+        env:
+          GITHUB_REPOSITORY_NAME: ${{ github.repository}}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python get_pr_info.py

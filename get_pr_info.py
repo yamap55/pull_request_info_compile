@@ -4,18 +4,13 @@ from typing import Any
 
 from github import Github
 
-GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
-COMMIT_MESSAGE = os.environ["COMMIT_MESSAGE"]
-GITHUB_REPOSITORY_NAME = os.environ["GITHUB_REPOSITORY_NAME"]
-PR_NUMBER_PATTERN = re.compile(r"#(\d*)")
-
 
 def log(message: Any, prefix: Any = ""):
     prefix = f"{prefix}: " if prefix else ""
     print(f"{prefix}{message}")
 
 
-def get_pr_number_from_commit_message(commit_message: str) -> int:
+def get_pr_number_from_commit_message(commit_message: str, pattern: re.Pattern) -> int:
     """
     コミットメッセージからPR番号を取得
 
@@ -25,6 +20,9 @@ def get_pr_number_from_commit_message(commit_message: str) -> int:
     ----------
     commit_message : str
         コミットメッセージ
+    pattern: re.Pattern
+        PR番号を表現する正規表現
+        グループマッチの1つ目を使用する
 
     Returns
     -------
@@ -35,7 +33,7 @@ def get_pr_number_from_commit_message(commit_message: str) -> int:
     first_row = commit_message.split("\n")[0]
     log(first_row, "first_row")
 
-    m = PR_NUMBER_PATTERN.search(first_row)
+    m = pattern.search(first_row)
     if not m:
         # コミットメッセージの1行目にPR番号が含まれていない場合
         return 0
@@ -70,9 +68,14 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
 
 
 def main():
+    GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+    COMMIT_MESSAGE = os.environ["COMMIT_MESSAGE"]
+    GITHUB_REPOSITORY_NAME = os.environ["GITHUB_REPOSITORY_NAME"]
+    PR_NUMBER_PATTERN = re.compile(r"#(\d*)")
+
     print(f"commit_message: {COMMIT_MESSAGE}")
     print(f"repository_name: {GITHUB_REPOSITORY_NAME}")
-    pr_number = get_pr_number_from_commit_message(COMMIT_MESSAGE)
+    pr_number = get_pr_number_from_commit_message(COMMIT_MESSAGE, PR_NUMBER_PATTERN)
     if not pr_number:
         log("PR number does not exist in the first line of the commit message")
         return

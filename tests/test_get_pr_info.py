@@ -1,7 +1,10 @@
 import re
+from unittest import mock
+from unittest.mock import PropertyMock
 
 import pytest
-from get_pr_info import get_pr_number_from_commit_message
+from get_pr_info import get_pr_number_from_commit_message, get_pr_summary
+from github import BadCredentialsException, UnknownObjectException
 
 
 class TestGetPrNumberFromCommitMessage:
@@ -34,3 +37,91 @@ class TestGetPrNumberFromCommitMessage:
         actual = get_pr_number_from_commit_message("", self.pattern)
         expected = 0
         assert actual == expected
+
+
+class TestGetPrInfo:
+    @pytest.fixture(autouse=True)
+    def setUp(self):
+        mock_client = mock.Mock()
+        mock_repo = mock.Mock()
+        mock_pull = mock.Mock()
+        with mock.patch("get_pr_info.Github") as mock_github:
+            mock_github.return_value = mock_client
+            mock_client.get_repo.return_value = mock_repo
+            mock_repo.get_pull.return_value = mock_pull
+            self.mock_github = mock_github
+            self.mock_client = mock_client
+            self.mock_repo = mock_repo
+            self.mock_pull = mock_pull
+
+            yield
+
+    def test_nomal(self):
+        mock_body = PropertyMock(return_value="PR_INFO")
+        type(self.mock_pull).body = mock_body
+        actual = get_pr_summary(999, "GITHUB_TOKEN", "REPOSITORY_NAME")
+        expected = "PR_INFO"
+
+        assert actual == expected
+        self.mock_github.assert_called_once_with("GITHUB_TOKEN")
+        self.mock_client.get_repo.assert_called_once_with("REPOSITORY_NAME")
+        self.mock_repo.get_pull.assert_called_once_with(999)
+        assert mock_body.call_count == 1
+
+    def test_bad_credential(self):
+        # トークンが誤っている場合
+        # APIにアクセスしたくないため、モックで例外を投げている
+        # ユニットテストとしては意味がないが、仕様記載の意味で記載しておく
+        # NOTE: トークンが誤っている場合でもgithubインスタンスの生成時にはエラーとならず、GitHub操作をした際にエラーとなる
+        self.mock_client.get_repo.side_effect = BadCredentialsException(
+            401,
+            data={
+                "message": "Bad credentials",
+                "documentation_url": "https://docs.github.com/rest",
+            },
+        )
+
+        with pytest.raises(BadCredentialsException):
+            get_pr_summary(999, "GITHUB_TOKEN", "REPOSITORY_NAME")
+
+        self.mock_github.assert_called_once_with("GITHUB_TOKEN")
+        self.mock_client.get_repo.assert_called_once_with("REPOSITORY_NAME")
+        self.mock_repo.get_pull.assert_not_called()
+
+    def test_not_exists_repository(self):
+        # リポジトリが存在しない場合
+        # APIにアクセスしたくないため、モックで例外を投げている
+        # ユニットテストとしては意味がないが、仕様記載の意味で記載しておく
+        self.mock_client.get_repo.side_effect = UnknownObjectException(
+            404,
+            data={
+                "message": "Not Found",
+                "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",
+            },
+        )
+
+        with pytest.raises(UnknownObjectException):
+            get_pr_summary(999, "GITHUB_TOKEN", "REPOSITORY_NAME")
+
+        self.mock_github.assert_called_once_with("GITHUB_TOKEN")
+        self.mock_client.get_repo.assert_called_once_with("REPOSITORY_NAME")
+        self.mock_repo.get_pull.assert_not_called()
+
+    def test_not_exists_pr_number(self):
+        # PR番号が存在しない場合
+        # APIにアクセスしたくないため、モックで例外を投げている
+        # ユニットテストとしては意味がないが、仕様記載の意味で記載しておく
+        self.mock_repo.get_pull.side_effect = UnknownObjectException(
+            404,
+            data={
+                "message": "Not Found",
+                "documentation_url": "https://docs.github.com/rest/reference/pulls#get-a-pull-request",
+            },
+        )
+
+        with pytest.raises(UnknownObjectException):
+            get_pr_summary(999, "GITHUB_TOKEN", "REPOSITORY_NAME")
+
+        self.mock_github.assert_called_once_with("GITHUB_TOKEN")
+        self.mock_client.get_repo.assert_called_once_with("REPOSITORY_NAME")
+        self.mock_repo.get_pull.assert_called_once_with(999)

@@ -62,9 +62,9 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
     """
     github = Github(github_token)
     repo = github.get_repo(repository_name)
-    pr = repo.get_pull(pr_number)
-    log(pr.body, "pr.body")
-    return pr.body
+    body = repo.get_pull(pr_number).body
+    log(body, "pr.body")
+    return body
 
 
 def main():

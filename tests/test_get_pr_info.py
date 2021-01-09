@@ -170,8 +170,7 @@ class TestGetIntegrationTestPoint:
               - こういうこと2
                 - 条件: こうしてほしい2
             - 担当
-              - API yamap55
-            """
+              - API yamap55"""
         )
 
         assert actual == expected

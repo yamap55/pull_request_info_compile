@@ -67,14 +67,42 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
     return body
 
 
-def get_integration_test_point(summary: str, target_section_title_row: str) -> str:
+def extract_target_section(summary: str, target_section_title_row: str) -> str:
+    """
+    対象のセクションのみを抽出
+
+    Parameters
+    ----------
+    summary : str
+        抽出対象のサマリ
+    target_section_title_row : str
+        抽出対象であるセクションのタイトル行（完全一致）
+
+    Returns
+    -------
+    str
+        抽出されたセクション
+    """
     messages = summary.split("\n")
     if target_section_title_row not in messages:
         # 対象行がない場合は空文字を返す
         # 本来であれば例外を投げた方が良いが、運用上mainブランチにマージ時に実行される事を想定しているため、ここで例外を投げても補足される可能性は低い
         return ""
+
+    # 対象のセクションより前のメッセージを除去
     i = messages.index(target_section_title_row)
-    return "\n".join(messages[i:])
+    remove_before_messages = messages[i:]
+
+    # 対象のセクションより後のメッセージを除去
+    # NOTE: 対象の文字列がh2であることに依存しているので汎用的にするのであれば修正の必要あり
+    search_index_generator = (
+        i for i, message in enumerate(remove_before_messages) if re.search("^#{1,2} ", message)
+    )
+    next(search_index_generator)  # 最初にマッチするのは対象の文字列なのでスキップ
+    i = next(search_index_generator, -1)
+    target_messages = remove_before_messages if i == -1 else remove_before_messages[:i]
+
+    return "\n".join(target_messages)
 
 
 def main():
@@ -92,7 +120,7 @@ def main():
         return
     pr_summary = get_pr_summary(pr_number, GITHUB_TOKEN, GITHUB_REPOSITORY_NAME)
     log(pr_summary, "pr_summary")
-    integration_test_point = get_integration_test_point(pr_summary, TARGET_SECTION_TITLE_ROW)
+    integration_test_point = extract_target_section(pr_summary, TARGET_SECTION_TITLE_ROW)
     log(integration_test_point, "integration_test_point")
 
 

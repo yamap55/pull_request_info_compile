@@ -4,11 +4,7 @@ from unittest import mock
 from unittest.mock import PropertyMock
 
 import pytest
-from get_pr_info import (
-    get_integration_test_point,
-    get_pr_number_from_commit_message,
-    get_pr_summary,
-)
+from get_pr_info import extract_target_section, get_pr_number_from_commit_message, get_pr_summary
 from github import BadCredentialsException, UnknownObjectException
 
 
@@ -161,7 +157,7 @@ class TestGetIntegrationTestPoint:
             """
         )
 
-        actual = get_integration_test_point(summary, "## 結合テスト観点")
+        actual = extract_target_section(summary, "## 結合テスト観点")
         expected = dedent(
             """\
             ## 結合テスト観点
@@ -182,7 +178,60 @@ class TestGetIntegrationTestPoint:
 
     def test_not_exists_target_section(self):
         summary = ""
-        actual = get_integration_test_point(summary, "## 結合テスト観点")
+        actual = extract_target_section(summary, "## 結合テスト観点")
         expected = ""
+
+        assert actual == expected
+
+    def test_another_section_at_the_end(self):
+        # 対象行より後ろに別のセクションが存在する場合
+
+        summary = dedent(
+            """\
+            ## 概要
+
+            - 現状（As is）
+              - こうなんです
+            - 理想（To be）
+              - こうなりたい
+            - 問題（Problem）
+              - こまってる
+            - 解決・やったこと（Action）
+              - これをやった
+
+            ## 結合テスト観点
+
+            - 対応概要
+              - こうやった
+            - 観点
+              - こういうこと1
+                - 条件: こうしてほしい2
+              - こういうこと2
+                - 条件: こうしてほしい2
+            - 担当
+              - API yamap55
+
+            ## 対象外セクション
+
+            - 対象外です
+            """
+        )
+
+        actual = extract_target_section(summary, "## 結合テスト観点")
+        expected = dedent(
+            """\
+            ## 結合テスト観点
+
+            - 対応概要
+              - こうやった
+            - 観点
+              - こういうこと1
+                - 条件: こうしてほしい2
+              - こういうこと2
+                - 条件: こうしてほしい2
+            - 担当
+              - API yamap55
+            """
+        )
 
         assert actual == expected

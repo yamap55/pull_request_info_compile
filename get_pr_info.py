@@ -31,14 +31,11 @@ def get_pr_number_from_commit_message(commit_message: str, pattern: re.Pattern) 
         ※取得できない場合には0を返す
     """
     first_row = commit_message.split("\n")[0]
-    log(first_row, "first_row")
-
     m = pattern.search(first_row)
     if not m:
         # コミットメッセージの1行目にPR番号が含まれていない場合
         return 0
     pr_number = int(m.groups()[0])
-    log(pr_number, "pr_number")
     return pr_number
 
 
@@ -63,7 +60,6 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
     github = Github(github_token)
     repo = github.get_repo(repository_name)
     body = repo.get_pull(pr_number).body
-    log(body, "pr.body")
     return body
 
 
@@ -83,21 +79,15 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     str
         抽出されたセクション
     """
-    log(summary, "summary")
     messages = summary.splitlines()
     if target_section_title_row not in messages:
         # 対象行がない場合は空文字を返す
         # 本来であれば例外を投げた方が良いが、運用上mainブランチにマージ時に実行される事を想定しているため、ここで例外を投げても補足される可能性は低い
-        log(
-            f"not exists target section title. target section title: {target_section_title_row}, messages: {messages}, \n\n debug\n[{','.join(summary)}]"  # noqa
-        )
         return ""
 
     # 対象のセクションより前のメッセージを除去
     i = messages.index(target_section_title_row)
-    log(i, "i")
     remove_before_messages = messages[i:]
-    log(remove_before_messages, "remove_before_messages")
 
     # 対象のセクションより後のメッセージを除去
     # NOTE: 対象の文字列がh2であることに依存しているので汎用的にするのであれば修正の必要あり
@@ -106,9 +96,7 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     )
     next(search_index_generator)  # 最初にマッチするのは対象の文字列なのでスキップ
     i = next(search_index_generator, -1)
-    log(i, "i")
     target_messages = remove_before_messages if i == -1 else remove_before_messages[:i]
-    log(target_messages, "target_messages")
 
     return "\n".join(target_messages)
 
@@ -123,12 +111,18 @@ def main():
     log(f"commit_message: {COMMIT_MESSAGE}")
     log(f"repository_name: {GITHUB_REPOSITORY_NAME}")
     pr_number = get_pr_number_from_commit_message(COMMIT_MESSAGE, PR_NUMBER_PATTERN)
+    log(pr_number, "pr_number")
     if not pr_number:
+        # TODO: 例外を投げて通知
         log("PR number does not exist in the first line of the commit message")
         return
     pr_summary = get_pr_summary(pr_number, GITHUB_TOKEN, GITHUB_REPOSITORY_NAME)
     log(pr_summary, "pr_summary")
     integration_test_point = extract_target_section(pr_summary, TARGET_SECTION_TITLE_ROW)
+    if not integration_test_point:
+        # TODO: 例外を投げて通知
+        log("target section title dose not exists.")
+        return
     log(integration_test_point, "integration_test_point")
 
 

@@ -97,7 +97,7 @@ class TestGetPrInfo:
             404,
             data={
                 "message": "Not Found",
-                "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",
+                "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",  # noqa
             },
         )
 
@@ -116,7 +116,7 @@ class TestGetPrInfo:
             404,
             data={
                 "message": "Not Found",
-                "documentation_url": "https://docs.github.com/rest/reference/pulls#get-a-pull-request",
+                "documentation_url": "https://docs.github.com/rest/reference/pulls#get-a-pull-request",  # noqa
             },
         )
 

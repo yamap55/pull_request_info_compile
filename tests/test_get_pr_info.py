@@ -234,3 +234,11 @@ class TestGetIntegrationTestPoint:
         )
 
         assert actual == expected
+
+    @pytest.mark.parametrize("line_separator", ["\n", "\r\n", "\r"])
+    def test_various_line_separator(self, line_separator):
+        summary = f"## HOGE{line_separator}## TARGET_ROW{line_separator}## HUGA"
+        actual = extract_target_section(summary, "## TARGET_ROW")
+        expected = "## TARGET_ROW"
+
+        assert actual == expected

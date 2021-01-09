@@ -88,6 +88,9 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     if target_section_title_row not in messages:
         # 対象行がない場合は空文字を返す
         # 本来であれば例外を投げた方が良いが、運用上mainブランチにマージ時に実行される事を想定しているため、ここで例外を投げても補足される可能性は低い
+        log(
+            f"not exists target section title. target section title: {target_section_title_row}, messages: {messages}, \n\n debug\n[{','.join(summary)}]"
+        )
         return ""
 
     # 対象のセクションより前のメッセージを除去

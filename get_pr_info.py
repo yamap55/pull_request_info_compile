@@ -83,6 +83,7 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     str
         抽出されたセクション
     """
+    log(summary, "summary")
     messages = summary.split("\n")
     if target_section_title_row not in messages:
         # 対象行がない場合は空文字を返す
@@ -91,7 +92,9 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
 
     # 対象のセクションより前のメッセージを除去
     i = messages.index(target_section_title_row)
+    log(i, "i")
     remove_before_messages = messages[i:]
+    log(remove_before_messages, "remove_before_messages")
 
     # 対象のセクションより後のメッセージを除去
     # NOTE: 対象の文字列がh2であることに依存しているので汎用的にするのであれば修正の必要あり
@@ -100,7 +103,9 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     )
     next(search_index_generator)  # 最初にマッチするのは対象の文字列なのでスキップ
     i = next(search_index_generator, -1)
+    log(i, "i")
     target_messages = remove_before_messages if i == -1 else remove_before_messages[:i]
+    log(target_messages, "target_messages")
 
     return "\n".join(target_messages)
 

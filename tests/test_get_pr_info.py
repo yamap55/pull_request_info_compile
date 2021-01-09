@@ -1,9 +1,14 @@
 import re
+from textwrap import dedent
 from unittest import mock
 from unittest.mock import PropertyMock
 
 import pytest
-from get_pr_info import get_pr_number_from_commit_message, get_pr_summary
+from get_pr_info import (
+    get_integration_test_point,
+    get_pr_number_from_commit_message,
+    get_pr_summary,
+)
 from github import BadCredentialsException, UnknownObjectException
 
 
@@ -125,3 +130,59 @@ class TestGetPrInfo:
         self.mock_github.assert_called_once_with("GITHUB_TOKEN")
         self.mock_client.get_repo.assert_called_once_with("REPOSITORY_NAME")
         self.mock_repo.get_pull.assert_called_once_with(999)
+
+
+class TestGetIntegrationTestPoint:
+    def test_nomal(self):
+        summary = dedent(
+            """\
+            ## 概要
+
+            - 現状（As is）
+              - こうなんです
+            - 理想（To be）
+              - こうなりたい
+            - 問題（Problem）
+              - こまってる
+            - 解決・やったこと（Action）
+              - これをやった
+
+            ## 結合テスト観点
+
+            - 対応概要
+              - こうやった
+            - 観点
+              - こういうこと1
+                - 条件: こうしてほしい2
+              - こういうこと2
+                - 条件: こうしてほしい2
+            - 担当
+              - API yamap55
+            """
+        )
+
+        actual = get_integration_test_point(summary, "## 結合テスト観点")
+        expected = dedent(
+            """\
+            ## 結合テスト観点
+
+            - 対応概要
+              - こうやった
+            - 観点
+              - こういうこと1
+                - 条件: こうしてほしい2
+              - こういうこと2
+                - 条件: こうしてほしい2
+            - 担当
+              - API yamap55
+            """
+        )
+
+        assert actual == expected
+
+    def test_not_exists_target_section(self):
+        summary = ""
+        actual = get_integration_test_point(summary, "## 結合テスト観点")
+        expected = ""
+
+        assert actual == expected

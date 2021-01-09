@@ -67,20 +67,33 @@ def get_pr_summary(pr_number: int, github_token: str, repository_name: str) -> s
     return body
 
 
+def get_integration_test_point(summary: str, target_section_title_row: str) -> str:
+    messages = summary.split("\n")
+    if target_section_title_row not in messages:
+        # 対象行がない場合は空文字を返す
+        # 本来であれば例外を投げた方が良いが、運用上mainブランチにマージ時に実行される事を想定しているため、ここで例外を投げても補足される可能性は低い
+        return ""
+    i = messages.index(target_section_title_row)
+    return "\n".join(messages[i:])
+
+
 def main():
     GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
     COMMIT_MESSAGE = os.environ["COMMIT_MESSAGE"]
     GITHUB_REPOSITORY_NAME = os.environ["GITHUB_REPOSITORY_NAME"]
     PR_NUMBER_PATTERN = re.compile(r"#(\d*)")
+    TARGET_SECTION_TITLE_ROW = "## 結合テスト観点"
 
-    print(f"commit_message: {COMMIT_MESSAGE}")
-    print(f"repository_name: {GITHUB_REPOSITORY_NAME}")
+    log(f"commit_message: {COMMIT_MESSAGE}")
+    log(f"repository_name: {GITHUB_REPOSITORY_NAME}")
     pr_number = get_pr_number_from_commit_message(COMMIT_MESSAGE, PR_NUMBER_PATTERN)
     if not pr_number:
         log("PR number does not exist in the first line of the commit message")
         return
     pr_summary = get_pr_summary(pr_number, GITHUB_TOKEN, GITHUB_REPOSITORY_NAME)
     log(pr_summary, "pr_summary")
+    integration_test_point = get_integration_test_point(pr_summary, TARGET_SECTION_TITLE_ROW)
+    log(integration_test_point, "integration_test_point")
 
 
 if __name__ == "__main__":

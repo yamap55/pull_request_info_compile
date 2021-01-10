@@ -29,5 +29,10 @@ jobs:
           GITHUB_REPOSITORY_NAME: ${{ github.repository}}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATLASSIAN_EMAIL: ${{ secrets.ATLASSIAN_EMAIL }}
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          ATLASSIAN_URL: ${{ secrets.ATLASSIAN_URL }}
+          JIRA_TARGET_PROJECT: ${{ secrets.JIRA_TARGET_PROJECT }}
+          JIRA_TARGET_ISSUE_SUMMARY: 結合テスト観点
         run: |
           python get_pr_info.py

@@ -1,4 +1,6 @@
 PyGithub==1.54.1
+atlassian-python-api==2.5.0
+requests==2.25.1
 
 # dev
 ipykernel==5.4.2

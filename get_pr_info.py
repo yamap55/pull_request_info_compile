@@ -2,7 +2,10 @@ import os
 import re
 from typing import Any
 
+import requests
+from atlassian import Jira
 from github import Github
+from requests.auth import HTTPBasicAuth
 
 
 def log(message: Any, prefix: Any = ""):
@@ -101,12 +104,61 @@ def extract_target_section(summary: str, target_section_title_row: str) -> str:
     return "\n".join(target_messages)
 
 
+def create_atlassian_session_with_auth(email: str, token: str) -> requests.Session:
+    """
+    認証付きのリクエストセッションを作成
+
+    Parameters
+    ----------
+    email : str
+        atlassianに登録しているEメールアドレス
+    token : str
+        atlassianの認証トークン
+
+    Returns
+    -------
+    requests.Session
+        リクエストセッション
+    """
+    session = requests.Session()
+    session.auth = HTTPBasicAuth(email, token)
+    return session
+
+
+def add_comment_to_jira_issue(jira_client: Jira, project: str, summary: str, comment: str) -> None:
+    """
+    指定された条件で取得されるIssueにコメントを追加
+
+    Parameters
+    ----------
+    jira_client : Jira
+        Jiraクライアント
+    project : str
+        プロジェクト名（キーとは異なるので注意）
+    summary : str
+        コメントを追加するIssueのsummary（曖昧検索）
+    comment : str
+        [description]
+    """
+    # TODO: 完全一致での指定がわからず、IssueのSummaryは曖昧検索で行っている
+    JQL = f'project = "{project}" AND summary ~ "{summary}" AND status!=Done  order by created DESC'
+    data = jira_client.jql(JQL)
+    issue_id = data["issues"][0]["key"]  # type: ignore
+    jira_client.issue_add_comment(issue_key=issue_id, comment=comment)
+
+
 def main():
     GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
     COMMIT_MESSAGE = os.environ["COMMIT_MESSAGE"]
     GITHUB_REPOSITORY_NAME = os.environ["GITHUB_REPOSITORY_NAME"]
     PR_NUMBER_PATTERN = re.compile(r"#(\d*)")
     TARGET_SECTION_TITLE_ROW = "## 結合テスト観点"
+
+    ATLASSIAN_API_TOKEN = os.environ["ATLASSIAN_API_TOKEN"]
+    ATLASSIAN_EMAIL = os.environ["ATLASSIAN_EMAIL"]
+    ATLASSIAN_URL = os.environ["ATLASSIAN_URL"]
+    JIRA_TARGET_PROJECT = os.environ["JIRA_TARGET_PROJECT"]
+    JIRA_TARGET_ISSUE_SUMMARY = os.environ["JIRA_TARGET_ISSUE_SUMMARY"]
 
     log(f"commit_message: {COMMIT_MESSAGE}")
     log(f"repository_name: {GITHUB_REPOSITORY_NAME}")
@@ -124,6 +176,16 @@ def main():
         log("target section title dose not exists.")
         return
     log(integration_test_point, "integration_test_point")
+
+    try:
+        session = create_atlassian_session_with_auth(ATLASSIAN_EMAIL, ATLASSIAN_API_TOKEN)
+        jira = Jira(url=ATLASSIAN_URL, session=session)
+        add_comment_to_jira_issue(
+            jira, JIRA_TARGET_PROJECT, JIRA_TARGET_ISSUE_SUMMARY, integration_test_point
+        )
+    except Exception as e:
+        # TODO: 例外時に公開リポジトリのログに出力されて欲しくないものが出力されるかもしれないため例外をもみ消す
+        print(e)
 
 
 if __name__ == "__main__":

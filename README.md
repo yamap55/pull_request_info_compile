@@ -34,4 +34,10 @@ GitHub Actions で動作させる場合はコンテキストから取得して�
 GITHUB_TOKEN=xxxxxxxxxxxx
 COMMIT_MESSAGE=[refactor] script (#8)\nhoge\nhugahuga
 GITHUB_REPOSITORY_NAME=yamap55/pull_request_info_compile
+
+ATLASSIAN_EMAIL=example@example.com
+ATLASSIAN_API_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxx
+ATLASSIAN_URL=https://xxxxxxx.atlassian.net/
+JIRA_TARGET_PROJECT=EXAMPLE-PROJECT
+JIRA_TARGET_ISSUE_SUMMARY=結合テスト観点
 ```
